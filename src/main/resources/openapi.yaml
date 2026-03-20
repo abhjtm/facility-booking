@@ -1,0 +1,335 @@
+openapi: 3.0.3
+info:
+  title: Facility Booking API
+  description: API for managing facility bookings
+  version: 1.0.0
+  contact:
+    name: API Support
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+tags:
+  - name: Facilities
+    description: Manage facilities available for booking
+  - name: Bookings
+    description: Manage facility bookings
+
+paths:
+  /api/bookings:
+    get:
+      tags:
+        - Bookings
+      summary: List all bookings
+      operationId: listBookings
+      parameters:
+        - name: apiKey
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: authentication key required for accessing the API
+        - name: facilityId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Filter bookings by facility
+        - name: startTime
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: unix timestamp in seconds to filter bookings starting from this time
+        - name: endTime
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: unix timestamp in seconds to filter bookings ending at this time
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [PENDING, CONFIRMED, CANCELLED]
+          description: Filter by booking status
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Booking'
+    post:
+      tags:
+        - Bookings
+      summary: Create a new booking
+      operationId: createBooking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+      responses:
+        '201':
+          description: Booking created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          description: Invalid input
+        '409':
+          description: Time slot not available
+
+  /api/bookings/{bookingId}:
+    get:
+      tags:
+        - Bookings
+      summary: Get booking by ID
+      operationId: getBookingById
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '404':
+          description: Booking not found
+
+  /api/bookings/{bookingId}/cancel:
+    post:
+      tags:
+        - Bookings
+      summary: Cancel a booking by bookedBy
+      operationId: cancelBooking
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelBookingRequest'
+      responses:
+        '200':
+          description: Booking cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '403':
+          description: Only bookedBy can cancel the booking
+        '404':
+          description: Booking not found
+        '400':
+          description: Booking cannot be cancelled
+
+  /api/bookings/{bookingId}/attendees:
+    patch:
+      tags:
+        - Bookings
+      summary: Add or remove requested attendees by bookedBy
+      operationId: updateBookingAttendees
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBookingAttendeesRequest'
+      responses:
+        '200':
+          description: Booking attendees updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '403':
+          description: Only bookedBy can update attendees
+        '404':
+          description: Booking not found
+        '400':
+          description: Invalid attendee update action
+
+  /api/bookings/{bookingId}/confirm-attendance:
+    patch:
+      tags:
+        - Bookings
+      summary: Confirm attendance for a requested attendee
+      operationId: confirmAttendance
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmAttendanceRequest'
+      responses:
+        '200':
+          description: Attendance confirmed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          description: Invalid attendee or booking state
+        '404':
+          description: Booking not found
+
+components:
+  schemas:
+    Booking:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        facilityId:
+          type: string
+          format: uuid
+        description:
+          type: string
+        bookedBy:
+          type: string
+          example: "john.doe@example.com"
+        requestedAttendees:
+          type: array
+          items:
+            type: string
+            format: email
+          example: ["jane@example.com", "bob@example.com"]
+        confirmedAttendees:
+          type: array
+          items:
+            type: string
+            format: email
+          example: ["jane@example.com", "bob@example.com"]
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/BookingStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateBookingRequest:
+      type: object
+      required:
+        - facilityId
+        - bookedBy
+        - startTime
+        - endTime
+      properties:
+        facilityId:
+          type: string
+          format: uuid
+        description:
+          type: string
+        bookedBy:
+          type: string
+          format: email
+        requestedAttendees:
+          type: array
+          items:
+            type: string
+            format: email
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+
+    CancelBookingRequest:
+      type: object
+      required:
+        - bookedBy
+      properties:
+        bookedBy:
+          type: string
+          format: email
+
+    UpdateBookingAttendeesRequest:
+      type: object
+      required:
+        - bookedBy
+      properties:
+        bookedBy:
+          type: string
+          format: email
+        attendeesToRemove:
+          type: array
+          items:
+            type: string
+            format: email
+        attendeesToAdd:
+          type: array
+          items:
+            type: string
+            format: email
+
+    ConfirmAttendanceRequest:
+      type: object
+      required:
+        - attendeeEmail
+      properties:
+        attendeeEmail:
+          type: string
+          format: email
+
+    BookingStatus:
+      type: string
+      enum:
+        - PENDING
+        - CONFIRMED
+        - CANCELLED
+        - COMPLETED
