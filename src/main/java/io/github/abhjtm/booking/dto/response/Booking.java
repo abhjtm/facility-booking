@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public record Booking(
     UUID id,
-    UUID facilityId,
+    int facilityId,
     String description,
     String bookedBy,
     List<String> requestedAttendees,

@@ -59,7 +59,7 @@ public class BookingService {
         return bookingRepository.findAll();
     }
 
-    public List<Booking> getBookingsByFacility(UUID facilityId) {
+    public List<Booking> getBookingsByFacility(int facilityId) {
         return bookingRepository.findByFacilityId(facilityId);
     }
 

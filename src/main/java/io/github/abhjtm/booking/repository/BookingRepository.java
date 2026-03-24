@@ -18,7 +18,7 @@ public interface BookingRepository {
     
     List<Booking> findAll();
     
-    List<Booking> findByFacilityId(UUID facilityId);
+    List<Booking> findByFacilityId(int facilityId);
     
     void deleteById(UUID id);
 }

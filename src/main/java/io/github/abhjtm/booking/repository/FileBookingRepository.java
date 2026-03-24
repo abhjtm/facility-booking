@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.github.abhjtm.booking.dto.response.Booking;
 import jakarta.annotation.PostConstruct;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
  * Can be replaced with JpaBookingRepository in future.
  */
 @Repository
+@ConditionalOnProperty(name = "booking.storage.type", havingValue = "file")
 public class FileBookingRepository implements BookingRepository {
 
     private final ObjectMapper objectMapper;
@@ -92,9 +94,9 @@ public class FileBookingRepository implements BookingRepository {
     }
 
     @Override
-    public List<Booking> findByFacilityId(UUID facilityId) {
+    public List<Booking> findByFacilityId(int facilityId) {
         return findAll().stream()
-                .filter(b -> b.facilityId().equals(facilityId))
+                .filter(b -> b.facilityId() == facilityId)
                 .collect(Collectors.toList());
     }
 
