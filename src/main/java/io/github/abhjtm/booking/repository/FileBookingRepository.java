@@ -101,6 +101,14 @@ public class FileBookingRepository implements BookingRepository {
     }
 
     @Override
+    public List<Booking> findByBookedBy(String bookedByEmail) {
+        return findAll().stream()
+                .filter(b -> b.bookedByEmail().equals(bookedByEmail))
+                .sorted(Comparator.comparing(Booking::startTime).reversed())
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public void deleteById(UUID id) {
         try {
             List<Booking> bookings = findAll().stream()

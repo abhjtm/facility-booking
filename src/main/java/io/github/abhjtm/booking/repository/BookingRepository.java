@@ -20,5 +20,7 @@ public interface BookingRepository {
     
     List<Booking> findByFacilityId(int facilityId);
     
+    List<Booking> findByBookedBy(String bookedByEmail);
+    
     void deleteById(UUID id);
 }

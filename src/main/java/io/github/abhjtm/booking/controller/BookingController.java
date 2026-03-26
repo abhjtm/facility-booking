@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/bookings")
 public class BookingController {
@@ -24,6 +26,17 @@ public class BookingController {
     public ResponseEntity<Booking> createBooking(@RequestBody CreateBookingRequest request) {
         Booking booking = bookingService.createBooking(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(booking);
+    }
+
+    /**
+     * Get all bookings made by a specific user
+     * @param userEmail The email of the user who made the booking
+     * @return List of bookings made by the user, sorted by start time (newest first)
+     */
+    @GetMapping("/user/{userEmail}")
+    public ResponseEntity<List<Booking>> getBookingsByUser(@PathVariable String userEmail) {
+        List<Booking> bookings = bookingService.getBookingsByUser(userEmail);
+        return ResponseEntity.ok(bookings);
     }
 
     @PostMapping("/{bookingId}/cancel")
